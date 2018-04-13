@@ -20,17 +20,17 @@ defmodule Beaker.Integrations.Phoenix do
   end
 
   def call(conn, ignore_path) do
-
     if ignore(conn, ignore_path) do
       conn
     else
-      start_time = Beaker.Time.now
+      start_time = Beaker.Time.now()
 
-      register_before_send(conn, fn(conn) ->
-        end_time = Beaker.Time.now
+      register_before_send(conn, fn conn ->
+        end_time = Beaker.Time.now()
         diff = end_time - start_time
 
         Beaker.TimeSeries.sample("Phoenix:ResponseTime", diff / 1000)
+        Beaker.TimeSeries.sample("Phoenix:RequestsPerMinute", 1)
         Beaker.Counter.incr("Phoenix:Requests")
 
         conn
@@ -39,6 +39,7 @@ defmodule Beaker.Integrations.Phoenix do
   end
 
   defp ignore(%Plug.Conn{path_info: []}, _), do: false
+
   defp ignore(%Plug.Conn{path_info: path_info}, ignore_path) do
     hd(path_info) == ignore_path
   end
